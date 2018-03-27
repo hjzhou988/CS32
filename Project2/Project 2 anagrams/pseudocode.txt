@@ -1,0 +1,45 @@
+int recursivePermute(string word, const string dict[], int size, string results[])
+{
+
+1. Generate all the permutations of “word”. Make it as an array.
+
+
+
+2. Get rid of the duplicated items in the array.
+
+for each element, find whether there is another element of the same value in the rest of the set. 
+
+for (i=0; i<sizeofpermutations-1; i++)
+{
+for k=1, k<size-i;k++
+if p[i]== p[i+k]
+redundant list[]=p[i]
+}
+
+string nonred[100];
+int nonredszie=0;
+
+if (In(size[i], nonred, nonredsize) ) i++;
+else 
+{
+nonmed += size[i];
+
+
+
+bool In(char c, string nonredundant, int size)
+{
+if size==0 return false
+
+if c==string[size-1] return true
+
+return In (char c, nonreduentant, size-1)
+
+}
+
+
+3. for each element in the array, find the match in the string dict[]. return each match into string results.
+
+
+
+
+}

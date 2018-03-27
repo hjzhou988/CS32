@@ -1,0 +1,46 @@
+1) Iceman
+
+Test the keys: up, right, left, down for directions for moving. When changing the direction, just face that direction but doesn’t move. Wherever it moves, the ice disappears.There is a lagging of ice disappearance int the sample game, but not in my game, though. I deleted the ice immediately in each tick, so that the ice will not interfere with hardcore protester finding the shortest path to find the iceman.  Iceman cannot move outside of the field or get into rocks, even though it still animates the motion.  Space for squirting. It will produce a squirt facing the same direction. If the same direction is blocked by ice or boulder, it will produce sound but will not cause hurt to protesters. ESC will lose the players life and end this round of game. TAB will drop a nugget pick-upable by the protesters. “z” or “ Z” will use the sonar kit. It can be annoyed by both types of protesters. “Back off” can cause a drop of 20% of health. When health reaches 0, it will produce a give up sound and the round of game ends.  
+
+2) Ice
+
+The ice is put in the coordinates according to the requirement. Initially I created a 61*64 matrix of pointers pointing to the ice, but later on, I found 64*64 is the easy way to correctly remove ice by iceman.
+
+3) Squirt
+
+Check whether the direction is consistent with the iceman. Also check the squirt can annoy the protester(s) and give iceman the correct score when they were annoyed to leave. The squirt also dissappear when blocked by ice or boulder.
+
+4) Barrel of oil
+
+It is buried in the ice  and will only appear when it is nearby the iceman within a distance of 4.0 and can be revealed by iceman within a radius of 12 when sonar is used. Iceman can pick it up when distance is within 3, and number of barrels left in the field is decreased by one. When  the number becomes 0, this level ends and goes to the new level. 
+
+5)Gold nuggets
+
+As is barrel, it is buried and will only appear when the same condition is met. When it is picked up by the iceman, Gold number increases by 1. iceman can drop it at the location where iceman stands at, and will disappear in certain amount of time if no protesters are near by. It can only be picked up by one protester, and have effects on only one protester .
+
+6) Water pool
+The water pool will randomly generate in the empty area when there is no ice. It will disappear in certain amount of time if it is not picked up by iceman in time. When it is picked up by iceman, squirt number will increase by 5.
+
+7) Sonar kit
+It will appear in the top left corner of the field intermittently. Just as water pool, it will disappear in certain amount of time if not picked up timely. It can be used by the iceman and reveal the barrel and nuggets within a radius of 12 (also produces a sound).
+ 
+When iceman pick up sonar, water, and nuggets, iceman will produce a cheer sound. When barrel is picked up, a different sound is made.
+
+8)Regular protester
+
+It will appear in the top right of the screen. It can be blocked by a boulder if I put a boulder on the left side of (60,60). It faces left and always going to the left when it is created. When it is near the iceman and facing the iceman (can be perpendicularly), it will produce a “back off” sound and iceman health will decrease by 20%. It will not immediately “back off” the iceman again. When iceman is in the same horizontal or vertical line as the regular protester, the protester will notice that and go in the direction where the iceman is, even though the protester was facing the other direction. When regular protester is annoyed by squirt, it will produce a sound and freeze for a few seconds. Their health will also decrease. 3 squirts can cause a regular protester to quit. When it decides to quit, it will say “I give up” and will find the shortest path to exit the field at (60,60) immediately with much faster pace.   When regular protester picks up a nugget, it will say  “I am rich” and find the shortest path to exit the field at (60,60) as well. 
+
+9) hardcore protester
+
+Mostly the same as regular protester in behavior, except that it will check the shortest path to the iceman as well. I tested this function by inserting a sound effect when it finds the shortest path to the iceman, and another sound effect when it decides to go to that direction. I also use a different sound effect when it fails to find the shortest path due to boulder block etc. Also it has more health than regular protester and need 10 squirts to quit. It will produce “I’m rich” sound and freeze for a few seconds and will not quit. 
+
+10) Boulder
+
+It will appear randomly within the field of ice, with ice removed from the 4x4 space it occupies. As long as ice below it is removed, it will fall after a few seconds with a sound effect. Iceman will die if it stays below the boulder. I also artificially set the protesters below the boulder in the tunnel. It will give up upon hit and choose the shortest path to leave, and iceman will increase score by 500. The boulder will also pass through the protester and disappear it hit the bottom or ice.
+
+11) StudentWorld
+It will initialize the game with a “T” shape empty space in a field filled with ice. Iceman appears at the intersection and at least one protester at top right corner. I made sure that boulders will not appear in the “T” shape space, since I never saw it so in the sample game, in addition to that it needs some space below it for it to fall. I checked the distribution of nuggets and barrels by setting their visibility as visible. I made sure that they will not appear within a distance of 6 with each other. In every tick, there is a chance of water pool, sonar kit, and new protesters (either regular or hardcore) appearing. I made sure that waterpool only appears at empty spaces randomly. 
+
+
+
+

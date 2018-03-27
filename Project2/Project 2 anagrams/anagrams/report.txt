@@ -1,0 +1,54 @@
+1. A brief description of notable obstacles you overcame.
+
+1) The printPermutions function
+
+Even though I followed the pseudocode provided by the instructor, I could not get the right permutation answer. Then I realized that I should backup “prefix” in the loop, so that it won’t increment every time the loop executes.
+
+2) The recursivePermute function
+I had a very hard time thinking of this function. At first I was thinking that this function needs to be a recursive function itself. Then I realized that it does not need to, and I can create other recursive functions and put them in this function.
+
+3) Get non-redundant permutation list.
+
+At first I was thinking to get rid of the redundant permutations after I generate all the permutations. It seems very complicated. Then I was thinking whether I can generate the non-redundant permutation list directly. It works. The logic is that, whenever we see a duplicated character in “rest”, we should not append it to “prefix”. 
+
+4) Have a counter in the recursive function.
+
+It seems impossible to have counter in the recursive function. I checked the Internet and people use int& counter as a parameter to pass to the function. That solved my problem.
+
+5) “for” loop conversion to recursive function.
+It took me a while to figure out that I need to pass other parameters (which will be used in the statements” in the recursive function as well.
+
+6) Combine strings into one string.
+Use += operator and string.substr(,) function.
+
+
+
+2. Test data
+
+1) permutation of “01234”, “012” , “01”
+
+This tests whether I generate all permutations correctly. At first I didn’t get all the possible permutations of “01234”. Then I simply used “012” and “01”, and it helped me figure out the bug.
+
+2) “top”
+
+BAD_ACCESS error when searching “tpo”. Then I realized that there is not enough memory because I didn’t implement -Wl,-stack_size,8000000  correctly.
+
+3) “001” “0001” “00112”
+Those strings were used to test whether I could get non-redundant permutation list.
+
+4) Double the number of words in dictionary.
+To test whether the readDictionary function can exit correctly when the number of words exceed 30000;
+
+5) cout<< numMatches<<endl<<dict[25143]<<endl<<dict[25142];
+To see how many words exactly in the dict.
+
+6)  “look”
+To see whether I could get a unique “look” in dict.
+
+7) “leek”
+It also returns “keel”
+
+
+
+
+

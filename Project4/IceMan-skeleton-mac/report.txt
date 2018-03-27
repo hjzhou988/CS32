@@ -1,0 +1,321 @@
+1. A high-level description of each of your public member functions in each of your classes:
+enum State {stable=1, waiting=2, falling=3, dead=0, active=4, pickablebyiceman=5, pickablebyprotesters=6, bribed=7};// an enumerate class of states that can be used for each actor. “dead” is the commonest one. Some are unique to specific classes. 
+struct Node // A struct to hold the x,y coordinates of the shortest path route. 
+{
+    Node(int X, int Y):x(X),y(Y){}
+    Node(){}
+    int x;
+    int y;
+};
+class Actor: public GraphObject
+{
+
+public:
+   
+    Actor(int imageID, int startX, int startY, Direction dir, double size, unsigned int depth);// constructor for Actor. Actually it is only used for Ice object, since it does not need a StudentWorld pointer.
+    Actor(StudentWorld* s,int imageID, int startX, int startY, Direction dir, double size, unsigned int depth);// an overloaded constructor for Actor, and it gets StudentWord pointer.
+    virtual void doSomething(){} //didn’t do anything, as its subclass Ice didn’t do anything as well. It’s virtual so that it can be overwritten by subclass doSomething functions. 
+    virtual StudentWorld* getWorld()
+    {return p;}  // Most of the subclasses need this pointer to access Student world.
+    State getState(){return s;} // get State of the object.
+    void setState(State state){s=state;} // set State of the object. When initialize it or when its state needs to be changed.
+    virtual bool decreaseHealth(int v){return false;} // a function that used to decrease the health of the object within the field when needed. return false as it will be implemented in only a few subclasses.
+    void move(Direction); // A function that simplifies the physical movement. You only need to provide the direction. It can be used by many subclasses.
+    void moveinthecurrentdirection();// A function that also simplifies the physical movement. You don’t need to provide the direction. It will move in the current direction.
+    bool checkblock(Direction,int,int ); // Check whether a location will be blocked by ice or by boulder or by boundary. You need to provide the direction and coordinates of the object.
+    bool checkboundaryblock(Direction dir, int x, int y); //Check whether a location will be blocked by boundary.
+    bool checkiceblock(Direction, int, int); //Check whether a location will be blocked by ice.
+    bool checkboulderblock(Direction, int, int); //Check whether a location will be blocked by boulder.
+
+    void moveonestep(int,int);//A function that also simplifies the physical movement.Given a coordinate, you just adjust the direction and move one step to it.
+    
+    virtual bool canActorsPassThroughMe() const{return true;}// It will be redefined for Boulder, as all the others in the list container can be passed.
+    virtual bool revealablebysonar() const {return false;} // can it be revealed by sonar? It will reveal barrels of oil and Goldnuggets when Iceman is nearby or the sonar kit was used.
+    virtual bool annoyable() const {return false;} // can it be annoyed? if it is annoyable, it will decrease health.
+    virtual bool canPickThingsUp() const{return false;} // can it pick things up? if it can pick things up, then it will disappear when close to certain objects
+    virtual void addGold(){}  // It is in the base class, since it will be called by the base class pointer that points to the object. It will be implemented later in subclasses. The reason why it is not pure virtual is that not every subclass needs it.
+    void SetCountdown(int c){countdown=c;} //Set a timer.
+    void CountminusOne(){countdown--; } // countdown decrease 1 unit.
+    bool Timeup(){if (countdown<=0) return true; else return false;} //Check whether time is up.
+private:
+    State s;
+    StudentWorld *p;
+    int countdown; 
+
+};
+
+
+class Ice: public Actor
+{
+public:
+    Ice(int startX, int startY): Actor(IID_ICE, startX, startY, right, 0.25, 3){} // A constructer for ice. it only needs the coordinates.
+};
+
+class Agent: public Actor
+{
+public:
+    Agent(StudentWorld* world, int startX, int startY, Direction startDir,
+          int imageID, unsigned int hitPoints): Actor (world, imageID, startX, startY, startDir, 1.0, 0) //All agents have hit points, which needs to be initialized. 
+    {
+        m_hitpoints=hitPoints;
+    }
+    int gethealth() const {return m_hitpoints;} // to get the hit points value
+    void sethealthto0(){ m_hitpoints=0;} //It will reset the hit points to zero when the player hit “ESC”.
+    virtual bool decreaseHealth(int v){m_hitpoints-=v; return true;}  // It will decrease the amount specified by “v”. It’s virtual because different subclass will have more different further reactions to the annoy. 
+    virtual bool annoyable() const {return true;} // Redefine the annoyability here so that all agents can be annoyed.
+    virtual bool canPickThingsUp() const{return true;} // Redefine this function to allow agents to pick things up.
+private:
+    int m_hitpoints; 
+};
+
+class Iceman: public Agent
+{
+public:
+    Iceman(StudentWorld *pointer);
+    virtual void doSomething(); // It will do what iceman is supposed to do. It’s virtual because it is controlled by a pointer that points to Actor.
+    int getSquirts() const { return m_water;} // get information to show in the text at top.
+    int getGold() const {return m_nuggets;} // get information to show in the text at top.
+    int getSonar() const {return m_sonar;} // get information to show in the text at top.
+    void increaseGold(){m_nuggets++;} //Modify information when necessary
+    void increaseSonar(){m_sonar++;} //Modify information when necessary
+    void increaseSquirts(){m_water+=5;}//Modify information when necessary
+    virtual bool decreaseHealth(int v); //It takes advantage of the decreaseHealth function from Agent, but it will play a “give up” sound when health is below 0. 
+    
+private:
+    int m_sonar;
+    int m_water;
+    int m_nuggets;
+    virtual bool checkblock(Direction);//Iceman has its unique checkblock function, as it won’t get blocked by ice. So it is redefined here.
+    void cleanice(); // A helper function that cleans the ice for iceman.
+};
+
+class Boulders: public Actor
+{
+public:
+    Boulders(StudentWorld *pointer, int startX, int startY);
+    virtual void doSomething();  // It will do what it is supposed to do during each tick. It’s virtual because it is controlled by a pointer that points to Actor.
+    virtual bool canActorsPassThroughMe() const {return false;} // redefining this function for boulder. It’s not passable. It’s virtual because every subclass has this and this function need to be redefined for boulder. 
+private:
+    int hiticelag;
+};
+
+class Squirt: public Actor
+{
+public:
+    Squirt(StudentWorld *pointer, int x, int y, Direction d); // Direction will be specified by the iceman, since it must be consistent with the iceman.
+    virtual void doSomething(); //As mentioned in previous doSomething functions, it needs to be virtual, and will do what it is supposed to do when it is produced by the iceman.
+};
+
+class ActivatingObject : public Actor
+{
+public:
+    ActivatingObject(StudentWorld* world, int startX, int startY, int imageID, bool visible, State s):Actor(world, imageID, startX, startY, right, 1.0, 2)
+    {
+        setVisible(visible);
+        setState(s);
+    }
+    virtual void doSomething()=0; // It’s virtual abstract because it won’t implement anything, as different subclasses will do different things. 
+    double distancetoiceman() // It is  a useful function to directly return the distance between object and iceman, to determine whether it should be revealed or picked up. It can be used by all the subclasses.
+};
+
+class Baggets: public ActivatingObject // Baggets means Barrels and Nuggets. 
+{
+public:
+    Baggets(StudentWorld* world, int x, int y, int imageID, bool visible, State s): ActivatingObject(world, x, y,imageID, visible,s){} States and visibility need to be specified as sometimes nuggets starts with visible and sometimes not.
+    virtual void doSomething()=0; // It’s pure abstract function, as its subclasses will do different things.
+    bool bediscovered(); // It is a useful function that can by used by Barrels and Nuggets when they are revealed by the iceman.
+    virtual bool revealablebysonar() const {return true;} // both barrels and nuggets are revealable by sonar.Since it was defined the base class as returning false, it needs to be redefined here to return true. 
+    bool amIvisible(){return m_amIvisible;} //Since isVisible() is not allowed to use, I created a helper member function with data member to indicate whether the object is visible or not. 
+    void setvisibility (bool b) { m_amIvisible=b;} // Same as above. Used to set visible or not.
+private:
+    bool m_amIvisible;
+
+};
+
+class Barrel: public Baggets
+{
+public:
+    Barrel(StudentWorld *p, int,int);
+    virtual void doSomething(); // It will be revealed by the iceman when distance is within 4, and it will be picked up within distance of 3.
+};
+
+
+class GoldNugget: public Baggets
+{
+public:
+    GoldNugget(StudentWorld *p,int x,int y, State s, bool b); // State specifies whether it is pickupable by iceman only or by protesters only. bool specifies whether it is visible or not. 
+    virtual void doSomething(); // Similar to Barrels, except that it has two states: pickup-able by iceman or protesters. Different states do different things. 
+};
+
+class Goodies: public ActivatingObject   // Goodies contains waterpool and sonarkit, since they share a lot of attributes.
+{
+public:
+    Goodies(StudentWorld *p, int, int, int imageID);
+    virtual void doSomething(); //It will do the common stuff shared by water pool and sonar kit, such as can be picked up within distance of 3 and produces sound “found goodies”. 
+};
+
+class SonarKit: public Goodies
+{
+public:
+    SonarKit(StudentWorld *p, int x, int y);
+    virtual void doSomething(); // It will include the doSomething function from Goodies, and increase score and update Sonarkit information. 
+};
+
+class WaterPool: public Goodies
+{
+public:
+    WaterPool(StudentWorld *p, int x, int y);
+    virtual void doSomething();// It will include the doSomething function from Goodies, and increase a different score from Sonarkiet and update squirt information. 
+};
+
+class Protester: public Agent
+{
+public:
+    Protester(StudentWorld *p, int imageID, unsigned int health);
+    virtual void doSomething()=0;//It is set pure virtual, because I have two other doSomething functions that return booline values instead of void, and will be used by its subclasses.
+    virtual bool decreaseHealth(int v);// It specifies what protesters will do after being annoyed, such as making a “I give up sound” or “annoyed” sound. It’s virtual because the base class also has it.    
+    void resetRestingtickcounts(int); // It resets the resting tick counts, and will be used by both types of protesters.
+    bool findshortestpath(int,int, std::stack<Node*> &); // It’s the function using Breadth first search method to return a route that was stored in a stack. It will be used by both types of protesters in their doSomething function.
+    virtual void addGold()=0; // It will be implemented later, since different kind of protesters dealing with gold differently.
+    bool doSomethingpart1(); //These are the two separate doSomething functions. I split doSomthing into two parts, returning boolines, since hardcore protester will have one more action in between these two parts.
+    bool doSomethingpart2();
+private:
+    int restingTickCounts;
+    int numSquaresToMoveInCurrentDirection;
+    int ticksToWaitBetweenMoves;
+    int shout;// to record the non-resting tick count without shouting
+    int perpendicularturn; // to  to record the non-resting tick count without perpendicularturn
+    void shoutaticeman();
+    bool visited[64][64]; //"visited" table
+    Node* prev[64][64]; //"previous" table
+    Node nodes[64][64]; // Nodes table
+    std::stack<Node*> S; //Stack to hold the exit route
+};
+
+class RegProtester:public Protester
+{
+public:
+    RegProtester(StudentWorld *p);
+    virtual void addGold(){getWorld()->increaseScore(25);setState(falling);}// It’s virtual because addGold function for regular protester and hardcore protester is different. It will cause the regulator protester leave the field immediately.
+    virtual bool decreaseHealth(int); //Same as above, decrease health function is different for regular protester and hardcore. It will increase a different score from hardcore when it is completely annoyed by squirt.  
+    virtual void doSomething(); // It will do what it is supposed to do according to the manual during each tick. It will make use of the two booline soSomething functions in the base class protester. 
+};
+
+class HardcoreProtester: public Protester
+{
+public:
+    HardcoreProtester(StudentWorld *p);
+    virtual void addGold();   //special addGold function for hard core protester. It will cause the hardcore protester to freeze. 
+    virtual bool decreaseHealth(int);  //special decrease health function for hardcore protester. It will add more score when hardcore protester is completely annoyed by squirt.
+    virtual void doSomething(); // It takes advantage of the two booline soSomething functions in the base class protester, and will chase the iceman if they detect iceman’s phone’s signal. 
+
+private:
+    std::stack<Node*> S2;//Stack to hold hard core protester chasing route
+};
+
+class StudentWorld : public GameWorld
+{
+public:
+    StudentWorld(std::string assetDir);
+    virtual ~StudentWorld();
+    virtual int init(); //The reason why init(), move(), and cleanUp() are virtual is because they are inherited from GameWorld. They will do the stuff described in the manual.
+    virtual int move();
+    virtual void cleanUp();
+    Ice* get_ice_array(int x, int y) const {return ice_array[x][y];}  // access the ice information at a specific position from outside of the class
+    void RemoveIce(int x, int y); // Remove ice at specific position from outside of the class
+    void CreateSquirt(int x, int y, GraphObject::Direction dir); // Create a squirt instructed by iceman
+    int getIcemanPosX(); // Get iceman position from outside of the class
+    int getIcemanPosY();
+    void decreaseBarrelsleft(); //update barrel information when iceman found a barrel.
+    void increaseIcemanGold(); //update goldnuggest information when iceman found a nugget
+    void increaseIcemanSonar();// update sonar information
+    void increaseIcemanSquirts();//update squirt information
+    void hitIceman();//function that will be used by protester to annoy iceman
+    bool checkboulderblock(int, int, GraphObject::Direction); // a function specialized to check whether is blocked by boulder
+    void revealhidden(int, int); // pass the position of iceman to it, and it reveals the hidden barrels and nuggets within 12. (center to center 12)
+    void dropnuggets(int, int); // a function to create a nugget at position dropped by iceman
+    bool nuggetpickbyprotesters(int x, int y); //if protester is within a range of pickupable nuggets, he will pick up the nugget 
+    bool squirtannoyprotesters(int x, int y); // if protester(s) is within a range of squirt, he(they) will be annoyed.
+    bool checkboulderinanarea(int x1, int x2, int y1, int y2); // check whether in the specified rectangle there is any boulder.
+    bool checkiceinarea(int, int, int, int); // check whether in the specified rectangle there is any ice.
+    void bonkprotesters(int, int);// check protesters and iceman are within the range of the falling rock.If they are, hit them by 100 points.
+    bool randompostionclear(int x, int y); // check whether postion x, y is clear for putting waterpool. 
+private:
+    Iceman* iceman_p;
+    Actor* actor;
+    std::list<Actor*> l_actors;
+    Ice* ice_array[64][64];
+    void setDisplayText();
+    int m_barrelsleft;
+    int Protesterticks;
+    int num_protesters;
+    int G; // chance of adding goodies
+    int T; // ticks of adding protestors
+    int P; // number of maximum protesters
+    void addProtester(); // randomly add a regular protester or hardcore protester into the field.
+};
+
+
+2. A list of all functionality that you failed to finish as well as known bugs in your classes:
+
+1)There is a weird bug. It seems that the boulder in the very right side of the ice field can be passed through by the iceman from top, but not from bottom or from the side. It occurs at the very right side, not left side or middle top right side of the iceman (as far as I have tested).   
+2) There was a bug causing the “trapping” of protesters nearby a boulder. It took me a very long to figure it out why. It turned out to be in the last two steps in the doSomething function of the protester. Step 8 should be executed after checking step 9, or it will step into the boulder one more time and trapped in the boulder (due to the while loop, and program freezes) in certain cases such as when the boulder is falling. It is fixed now.
+
+3. A list of other design decisions and assumptions you made:
+1) Different from the sample game, the ice in my game is immediately removed by the iceman in every tick. This does not seem to be specified in the requirements.
+2) Different from the sample game, I keep the iceman the pose of digging even when it encounter a boulder. In the sample game, iceman freezes when it touches the boulder.
+3) I assume that no barrels or gold nuggets are created in the tunnel. 
+
+4. A description of how you tested each of your classes:
+1) Iceman
+
+Test the keys: up, right, left, down for directions for moving. When changing the direction, just face that direction but doesn’t move. Wherever it moves, the ice disappears.There is a lagging of ice disappearance int the sample game, but not in my game, though. I deleted the ice immediately in each tick, so that the ice will not interfere with hardcore protester finding the shortest path to find the iceman.  Iceman cannot move outside of the field or get into rocks, even though it still animates the motion.  Space for squirting. It will produce a squirt facing the same direction. If the same direction is blocked by ice or boulder, it will produce sound but will not cause hurt to protesters. ESC will lose the players life and end this round of game. TAB will drop a nugget pick-upable by the protesters. “z” or “ Z” will use the sonar kit. It can be annoyed by both types of protesters. “Back off” can cause a drop of 20% of health. When health reaches 0, it will produce a give up sound and the round of game ends.  
+
+2) Ice
+
+The ice is put in the coordinates according to the requirement. Initially I created a 61*64 matrix of pointers pointing to the ice, but later on, I found 64*64 is the easy way to correctly remove ice by iceman.
+
+3) Squirt
+
+Check whether the direction is consistent with the iceman. Also check the squirt can annoy the protester(s) and give iceman the correct score when they were annoyed to leave. The squirt also dissappear when blocked by ice or boulder.
+
+4) Barrel of oil
+
+It is buried in the ice  and will only appear when it is nearby the iceman within a distance of 4.0 and can be revealed by iceman within a radius of 12 when sonar is used. Iceman can pick it up when distance is within 3, and number of barrels left in the field is decreased by one. When  the number becomes 0, this level ends and goes to the new level. 
+
+5)Gold nuggets
+
+As is barrel, it is buried and will only appear when the same condition is met. When it is picked up by the iceman, Gold number increases by 1. iceman can drop it at the location where iceman stands at, and will disappear in certain amount of time if no protesters are near by. It can only be picked up by one protester, and have effects on only one protester .
+
+6) Water pool
+The water pool will randomly generate in the empty area when there is no ice. It will disappear in certain amount of time if it is not picked up by iceman in time. When it is picked up by iceman, squirt number will increase by 5.
+
+7) Sonar kit
+It will appear in the top left corner of the field intermittently. Just as water pool, it will disappear in certain amount of time if not picked up timely. It can be used by the iceman and reveal the barrel and nuggets within a radius of 12 (also produces a sound).
+ 
+When iceman pick up sonar, water, and nuggets, iceman will produce a cheer sound. When barrel is picked up, a different sound is made.
+
+8)Regular protester
+
+It will appear in the top right of the screen. It can be blocked by a boulder if I put a boulder on the left side of (60,60). It faces left and always going to the left when it is created. When it is near the iceman and facing the iceman (can be perpendicularly), it will produce a “back off” sound and iceman health will decrease by 20%. It will not immediately “back off” the iceman again. When iceman is in the same horizontal or vertical line as the regular protester, the protester will notice that and go in the direction where the iceman is, even though the protester was facing the other direction. When regular protester is annoyed by squirt, it will produce a sound and freeze for a few seconds. Their health will also decrease. 3 squirts can cause a regular protester to quit. When it decides to quit, it will say “I give up” and will find the shortest path to exit the field at (60,60) immediately with much faster pace.   When regular protester picks up a nugget, it will say  “I am rich” and find the shortest path to exit the field at (60,60) as well. 
+
+9) hardcore protester
+
+Mostly the same as regular protester in behavior, except that it will check the shortest path to the iceman as well. I tested this function by inserting a sound effect when it finds the shortest path to the iceman, and another sound effect when it decides to go to that direction. I also use a different sound effect when it fails to find the shortest path due to boulder block etc. Also it has more health than regular protester and need 10 squirts to quit. It will produce “I’m rich” sound and freeze for a few seconds and will not quit. 
+
+10) Boulder
+
+It will appear randomly within the field of ice, with ice removed from the 4x4 space it occupies. As long as ice below it is removed, it will fall after a few seconds with a sound effect. Iceman will die if it stays below the boulder. I also artificially set the protesters below the boulder in the tunnel. It will give up upon being hit and choose the shortest path to leave, and iceman will increase score by 500. The boulder will also pass through the protester and disappear when it hit the bottom or ice. It also moves one more step onto the ice ( checked by using “f” key) and disappear after that. 
+
+11) StudentWorld
+It will initialize the game with a “T” shape empty space in a field filled with ice. Iceman appears at the intersection and at least one protester at top right corner. I made sure that boulders will not appear in the “T” shape space, since I never saw it so in the sample game, in addition to that it needs some space below it for it to fall. I checked the distribution of nuggets and barrels by setting their visibility as visible. I made sure that they will not appear within a distance of 6 with each other. In every tick, there is a chance of water pool, sonar kit, and new protesters (either regular or hardcore) appearing. I made sure that waterpool only appears at empty spaces randomly. When finishing a level, there will also be a sound effect. It seems that no new objects will be created by classes other than StudentWorld class. So only StudentWorld class has an implemented destructor. 
+
+
+
+
+
+
+
+
+
+
