@@ -1,7 +1,7 @@
 # CS32 projects
 
 ## Project1 "Zion"
-A game in which player fights against many robots in an restricted area. Different objects are required to split into different header files and implementation files.
+A game in which the player fights against many robots in an restricted area. Different objects are required to split into different header files and implementation files.
 
 ## Project2 "Anagram"
 A program that you look up all the possible permutations of a word in a dictionary using recursion algorithm instead of "for loop". 
